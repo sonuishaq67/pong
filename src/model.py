@@ -63,7 +63,7 @@ class Model(nn.Module):
     def save_model(self,filename='models/latest.pt'):
         torch.save(self.state_dict(),filename)
 
-    def load_mode(self,filename='models/latest.pt'):
+    def load_model(self,filename='models/latest.pt'):
         # torch.save(self.state_dict(),filename)
         try:
             self.load_state_dict(torch.load(filename))

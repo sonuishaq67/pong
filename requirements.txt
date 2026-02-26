@@ -1,4 +1,4 @@
-gymnasium[atari]==1.0.0
+gymnasium[atari]>=1.1.0
 ale-py
 tensorboard
 pygame

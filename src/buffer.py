@@ -4,15 +4,15 @@ import torch
 
 class ReplayBuffer():
     
-    def __init__(self,max_size, input_shape, n_action, device='cpu'):
+    def __init__(self,max_size, input_shape, device='cpu'):
         # storing in ram because we're storing a lot of data
         
         self.mem_size = max_size
         self.mem_ctr=0
         self.state_memory= np.zeros((self.mem_size,*input_shape),dtype=np.uint8)
         self.next_state_memory= np.zeros((self.mem_size,*input_shape),dtype=np.uint8)
-        self.action_memory = np.zeros(self.mem_size, dtype=np.float32)
-        self.reward_memory = np.zeros(self.mem_size, dtype=np.uint8)
+        self.action_memory = np.zeros(self.mem_size, dtype=np.uint8)
+        self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
         self.terminal_memory = np.zeros(self.mem_size,dtype=bool) 
         self.device = device
         
