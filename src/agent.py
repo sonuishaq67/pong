@@ -7,16 +7,17 @@ import datetime
 import time
 from torch.utils.tensorboard import SummaryWriter
 import random, os, cv2
+import numpy as np
 
 class Agent():
     def __init__(self,env,hidden_layer,learning_rate,step_repeat,gamma):
         self.env=env
         self.step_repeat=step_repeat
         self.gamma=gamma
+        self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
         
         obs, info = self.env.reset()
         obs = self.process_observation(obs)
-        self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
         
         print('loaded model on ',self.device)
         
@@ -28,7 +29,7 @@ class Agent():
         self.learning_rate = learning_rate
         
     def process_observation(self,obs):
-        obs=torch.tensor(obs,dtype=torch.float32).permute(2,0,1)
+        obs=torch.tensor(np.array(obs),dtype=torch.uint8,device=self.device).permute(2,0,1)
         return obs
     
     def train(self,episodes,max_episode_steps,summary_writer_suffix,batch_size,epsilon,epsilon_decay,min_epsilon):

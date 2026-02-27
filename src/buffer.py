@@ -5,16 +5,17 @@ import torch
 class ReplayBuffer():
     
     def __init__(self,max_size, input_shape, device='cpu'):
-        # storing in ram because we're storing a lot of data
+        # storing on device to reduce RAM usage and speed up training
         
         self.mem_size = max_size
         self.mem_ctr=0
-        self.state_memory= np.zeros((self.mem_size,*input_shape),dtype=np.uint8)
-        self.next_state_memory= np.zeros((self.mem_size,*input_shape),dtype=np.uint8)
-        self.action_memory = np.zeros(self.mem_size, dtype=np.uint8)
-        self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
-        self.terminal_memory = np.zeros(self.mem_size,dtype=bool) 
         self.device = device
+        
+        self.state_memory = torch.zeros((self.mem_size, *input_shape), dtype=torch.uint8, device=self.device)
+        self.next_state_memory = torch.zeros((self.mem_size, *input_shape), dtype=torch.uint8, device=self.device)
+        self.action_memory = torch.zeros(self.mem_size, dtype=torch.long, device=self.device)
+        self.reward_memory = torch.zeros(self.mem_size, dtype=torch.float32, device=self.device)
+        self.terminal_memory = torch.zeros(self.mem_size, dtype=torch.bool, device=self.device)
         
     
     # sample only when we have enough batches so as to not overfit the model on a small sample
@@ -29,7 +30,7 @@ class ReplayBuffer():
         index = self.mem_ctr % self.mem_size
         self.state_memory[index]= state
         self.next_state_memory[index]=next_state
-        self.action_memory[index]=torch.tensor(action).detach().cpu()
+        self.action_memory[index]=action
         self.reward_memory[index]=reward
         self.terminal_memory[index]=done
         self.mem_ctr+=1
@@ -37,12 +38,12 @@ class ReplayBuffer():
     def sample_buffer(self,batch_size):
         # max_mem to use if mem is not full
         max_mem=min(self.mem_ctr,self.mem_size)
-        batch = np.random.choice(max_mem,batch_size)
+        batch = torch.randint(0, max_mem, (batch_size,), device=self.device)
         
-        states=torch.tensor(self.state_memory[batch],dtype=torch.float32).to(self.device)
-        actions= torch.tensor(self.action_memory[batch],dtype=torch.float32).to(self.device)
-        rewards=torch.tensor(self.reward_memory[batch],dtype=torch.float32).to(self.device)
-        next_states=torch.tensor(self.next_state_memory[batch],dtype=torch.float32).to(self.device)
-        dones= torch.tensor(self.terminal_memory[batch],dtype=torch.bool).to(self.device)
+        states = self.state_memory[batch].float()
+        actions = self.action_memory[batch]
+        rewards = self.reward_memory[batch]
+        next_states = self.next_state_memory[batch].float()
+        dones = self.terminal_memory[batch]
         
-        return states, actions, rewards, next_states,dones
+        return states, actions, rewards, next_states, dones
