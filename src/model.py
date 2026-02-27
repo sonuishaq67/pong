@@ -6,7 +6,7 @@ class Model(nn.Module):
     def __init__(self, action_dim, hidden_dim=256, observation_shape=None):
         super(Model,self).__init__()
         
-        self.conv1=nn.Conv2d(in_channels=1,out_channels=8,kernel_size=4, stride=2)
+        self.conv1=nn.Conv2d(in_channels=observation_shape[0],out_channels=8,kernel_size=4, stride=2)
         self.conv2=nn.Conv2d(in_channels=8,out_channels=16,kernel_size=4, stride=2)
         self.conv3=nn.Conv2d(in_channels=16,out_channels=32,kernel_size=3, stride=2)
 

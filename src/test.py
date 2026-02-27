@@ -1,7 +1,7 @@
 from agent import Agent
 import gymnasium as gym
 import ale_py
-from gymnasium.wrappers import GrayscaleObservation,ResizeObservation
+from gymnasium.wrappers import GrayscaleObservation,ResizeObservation,FrameStackObservation
 
 episodes=10000
 max_ep_steps=10000
@@ -13,13 +13,14 @@ gamma=0.99
 batch_size=64
 epsilon=1
 min_epsilon=0.1
-epsilon_decay=0.995
+epsilon_decay_steps=100000
 
 
-env=gym.make("ALE/Pong-v5",render_mode="human")
+env=gym.make("ALE/Pong-v5",render_mode="human",frameskip=1)
 
 env= ResizeObservation(env,(64,64))
-env= GrayscaleObservation(env, keep_dim=True)
+env= GrayscaleObservation(env, keep_dim=False)
+env= FrameStackObservation(env, 4)
 
 agent = Agent(env,hidden_layer=hidden_layer,learning_rate=learning_rate,step_repeat=step_repeat,gamma=gamma)
 

@@ -29,10 +29,10 @@ class Agent():
         self.learning_rate = learning_rate
         
     def process_observation(self,obs):
-        obs=torch.tensor(np.array(obs),dtype=torch.uint8,device=self.device).permute(2,0,1)
+        obs=torch.tensor(np.array(obs),dtype=torch.uint8,device=self.device)
         return obs
     
-    def train(self,episodes,max_episode_steps,summary_writer_suffix,batch_size,epsilon,epsilon_decay,min_epsilon):
+    def train(self,episodes,max_episode_steps,summary_writer_suffix,batch_size,epsilon,epsilon_decay_steps,min_epsilon):
         summary_writer_name=f'runs/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_{summary_writer_suffix}'
         writer = SummaryWriter(summary_writer_name)
         if not os.path.exists('models'):
@@ -74,6 +74,8 @@ class Agent():
                 episode_steps+=1
                 total_steps+=1
                 
+                epsilon = max(min_epsilon, 1.0 - (1.0 - min_epsilon) * total_steps / epsilon_decay_steps)
+                
                 if self.memory.can_sample(batch_size):
                     observations, actions, rewards, next_observations, dones = self.memory.sample_buffer(batch_size)
                     
@@ -99,13 +101,11 @@ class Agent():
                     if episode_steps%4==0:
                         soft_update(self.target_model, self.model)
             
-            self.model.save_model()
+            if episode % 1000 == 0:
+                self.model.save_model()
             
             writer.add_scalar('Score',episode_reward,episode)
             writer.add_scalar('Epsilon',epsilon,episode)
-            
-            if epsilon>min_epsilon:
-                epsilon*=epsilon_decay
             
             episode_time = time.time()-episode_start_time
             
