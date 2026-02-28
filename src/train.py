@@ -1,6 +1,7 @@
 from agent import Agent
 import gymnasium as gym
 from gymnasium import spaces
+from gymnasium.vector import AsyncVectorEnv
 import ale_py
 from gymnasium.wrappers import GrayscaleObservation, ResizeObservation, FrameStackObservation, TransformObservation
 import numpy as np
@@ -9,50 +10,51 @@ import torch
 # Enable cudnn optimizations
 torch.backends.cudnn.benchmark = True
 
-episodes = 10000
-max_ep_steps = 10000
+N_ENVS = 16                     # 16 parallel envs on 16 cores, 16 left for PyTorch
+total_episodes = 10000
 
 # Optimized for 80GB VRAM, 32 cores, 64GB RAM
-hidden_layer = 512          # Increased model capacity
-learning_rate = 0.00025     # Standard DQN learning rate
-step_repeat = 4
+hidden_layer = 512
+learning_rate = 0.00025
 gamma = 0.99
-batch_size = 512            # Much larger batch for 80GB VRAM
+batch_size = 1024               # Larger batch to amortize GPU kernel overhead
 epsilon = 1.0
 min_epsilon = 0.1
-epsilon_decay_steps = 500000  # Slower decay for better exploration over 10k episodes
-buffer_size = 1000000         # Larger replay buffer
+epsilon_decay_steps = 500000    # Total transitions, N_ENVS transitions added per env-step
+buffer_size = 500000            # 500K × 2 × 4 × 84 × 84 ≈ 28GB VRAM (vs 56GB at 1M)
 
-# Crop function to remove score area (top 34 pixels of 210)
+
 def crop_frame(obs):
-    # Original Pong frame is 210x160, crop top 34 pixels (score area)
-    # After grayscale: shape is (210, 160), crop to (176, 160)
     return obs[34:, :]
 
-env = gym.make("ALE/Pong-v5", render_mode="rgb_array", frameskip=1)
 
-# First convert to grayscale, then crop, then resize
-env = GrayscaleObservation(env, keep_dim=False)
-# Define new observation space after crop: (210-34, 160) = (176, 160)
-cropped_obs_space = spaces.Box(low=0, high=255, shape=(176, 160), dtype=np.uint8)
-env = TransformObservation(env, crop_frame, cropped_obs_space)
-env = ResizeObservation(env, (84, 84))  # Standard DQN size
-env = FrameStackObservation(env, 4)
+def make_env():
+    def _init():
+        env = gym.make("ALE/Pong-v5", frameskip=4)
+        env = GrayscaleObservation(env, keep_dim=False)
+        cropped_obs_space = spaces.Box(low=0, high=255, shape=(176, 160), dtype=np.uint8)
+        env = TransformObservation(env, crop_frame, cropped_obs_space)
+        env = ResizeObservation(env, (84, 84))
+        env = FrameStackObservation(env, 4)
+        return env
+    return _init
+
+
+vec_env = AsyncVectorEnv([make_env() for _ in range(N_ENVS)])
 
 agent = Agent(
-    env,
+    vec_env,
+    n_envs=N_ENVS,
     hidden_layer=hidden_layer,
     learning_rate=learning_rate,
-    step_repeat=step_repeat,
     gamma=gamma,
     buffer_size=buffer_size
 )
 
-summary_writer_suffix = f'dqn_lr={learning_rate}_hl={hidden_layer}_bs={batch_size}'
+summary_writer_suffix = f'dqn_lr={learning_rate}_hl={hidden_layer}_bs={batch_size}_n_envs={N_ENVS}'
 
 agent.train(
-    episodes=episodes,
-    max_episode_steps=max_ep_steps,
+    total_episodes=total_episodes,
     summary_writer_suffix=summary_writer_suffix,
     batch_size=batch_size,
     epsilon=epsilon,
