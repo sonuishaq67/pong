@@ -44,7 +44,7 @@ class Agent():
     def process_observation(self, obs):
         return torch.tensor(np.asarray(obs), dtype=torch.uint8, device=self.device)
 
-    def train(self, total_episodes, summary_writer_suffix, batch_size, epsilon, epsilon_decay_steps, min_epsilon):
+    def train(self, total_episodes, summary_writer_suffix, batch_size, epsilon, epsilon_decay_steps, min_epsilon, train_freq=4):
         summary_writer_name = f'runs/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_{summary_writer_suffix}'
         writer = SummaryWriter(summary_writer_name)
         if not os.path.exists('models'):
@@ -94,7 +94,7 @@ class Agent():
             # Decay epsilon by N_ENVS transitions per env-step to keep same total-transition schedule
             epsilon = max(min_epsilon, epsilon - (1.0 - min_epsilon) * self.n_envs / epsilon_decay_steps)
 
-            if self.memory.can_sample(batch_size):
+            if self.memory.can_sample(batch_size) and total_steps % train_freq == 0:
                 observations, actions_b, rewards_b, next_observations, dones_b = self.memory.sample_buffer(batch_size)
 
                 dones_b = dones_b.unsqueeze(1).float()

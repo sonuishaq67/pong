@@ -11,17 +11,18 @@ import torch
 torch.backends.cudnn.benchmark = True
 
 N_ENVS = 16                     # 16 parallel envs on 16 cores, 16 left for PyTorch
-total_episodes = 10000
+total_episodes = 60000
 
 # Optimized for 80GB VRAM, 32 cores, 64GB RAM
 hidden_layer = 512
 learning_rate = 0.00025
 gamma = 0.99
-batch_size = 1024               # Larger batch to amortize GPU kernel overhead
+batch_size = 512                # Reduced: halves compute per update vs 1024
 epsilon = 1.0
 min_epsilon = 0.1
-epsilon_decay_steps = 500000    # Total transitions, N_ENVS transitions added per env-step
-buffer_size = 500000            # 500K × 2 × 4 × 84 × 84 ≈ 28GB VRAM (vs 56GB at 1M)
+epsilon_decay_steps = 2000000   # Scaled ~4x for 60K episodes: more exploration = faster episodes
+buffer_size = 250000            # Reduced: less VRAM, faster random access (~14GB)
+train_freq = 4                  # Train every 4 env-steps instead of every step
 
 
 def crop_frame(obs):
@@ -59,5 +60,6 @@ agent.train(
     batch_size=batch_size,
     epsilon=epsilon,
     epsilon_decay_steps=epsilon_decay_steps,
-    min_epsilon=min_epsilon
+    min_epsilon=min_epsilon,
+    train_freq=train_freq
 )
