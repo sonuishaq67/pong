@@ -2,6 +2,10 @@
 
 A Deep Q-Network (DQN) implementation using PyTorch to solve the Atari Pong environment (`ALE/Pong-v5`) from Gymnasium.
 
+## Demo
+
+![Agent gameplay](demo.gif)
+
 ## Features
 - **Double DQN**: Uses a Deep Q-Network with a target network and Double DQN action selection for stability.
 - **Experience Replay**: Implements a replay buffer to break correlation between consecutive transitions.
@@ -82,9 +86,6 @@ Key hyperparameters are defined at the top of `src/train.py` and `src/test.py`:
 - `N_ENVS`: 16 (Number of parallel environments)
 - `frameskip`: 4 (ALE frameskip; 4 frames skipped per action)
 
-## Demo
-
-![Agent gameplay](demo.gif)
 
 ## Results
 
@@ -103,12 +104,10 @@ Trained for **21,000 episodes** against the ALE built-in AI.
   Avg opp score:    1.440
   Best game:        +21  (21 - 0)
   Worst game:       +14  (21 - 7)
-  Perfect wins:     10000  (100.0%)
-  Perfect losses:   0  (0.0%)
 ==================================================
 ```
 
-The agent achieves a **100% win rate** over 10,000 evaluation games, averaging a score of 21–1.4 and winning 100% of games perfectly (holding the opponent to 0 points) in every single match.
+The agent achieves a **100% win rate** over 10,000 evaluation games, averaging a score of 21–1.4
 
 ## Architecture
 The Q-Network consists of:
