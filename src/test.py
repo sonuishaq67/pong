@@ -23,6 +23,6 @@ env = TransformObservation(env, crop_frame, cropped_obs_space)
 env = ResizeObservation(env, (84, 84))
 env = FrameStackObservation(env, 4)
 
-agent = Agent(env, n_envs=1, hidden_layer=hidden_layer, learning_rate=learning_rate, gamma=gamma)
+agent = Agent(env, n_envs=1, hidden_layer=hidden_layer, learning_rate=learning_rate, gamma=gamma,buffer_size=1)
 
 agent.test()
