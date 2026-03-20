@@ -37,7 +37,7 @@ A Deep Q-Network (DQN) implementation using PyTorch to solve the Atari Pong envi
 
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/sonuishaq67/pong
    cd pong
    ```
 
